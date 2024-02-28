@@ -12,20 +12,20 @@ let nor_gate  : gate = Binary (fun a b -> not (a || b))
 let xor_gate  : gate = Binary (fun a b -> a <> b)
 let xnor_gate : gate = Binary (fun a b -> a = b)
 
-let rec evaluate_circuit (inputs: bool list) (circuit: circuit) : bool list =
-  match circuit with
-  | [] -> inputs
-  | Unary f :: rest -> let output = List.map f inputs
-                       in evaluate_circuit output rest
-  | Binary f :: rest ->
-      let rec apply_binary pairs =
-        match pairs with
-        | a :: b :: tail -> f a b :: apply_binary tail
-        | _ -> []  (* Handle the case of an odd number of elements or empty list *)
-      in let processed_inputs = apply_binary inputs
-      in evaluate_circuit processed_inputs rest
-  | Circuit c :: rest -> let circuit_output = evaluate_circuit inputs c
-                         in evaluate_circuit circuit_output rest
+(* let rec evaluate_circuit (inputs: bool list) (circuit: circuit) : bool list = *)
+(*   match circuit with *)
+(*   | [] -> inputs *)
+(*   | Unary f :: rest -> let output = List.map f inputs *)
+(*                        in evaluate_circuit output rest *)
+(*   | Binary f :: rest -> *)
+(*       let rec apply_binary pairs = *)
+(*         match pairs with *)
+(*         | a :: b :: tail -> f a b :: apply_binary tail *)
+(*         | _ -> []  (\* Handle the case of an odd number of elements or empty list *\) *)
+(*       in let processed_inputs = apply_binary inputs *)
+(*       in evaluate_circuit processed_inputs rest *)
+(*   | Circuit c :: rest -> let circuit_output = evaluate_circuit inputs c *)
+(*                          in evaluate_circuit circuit_output rest *)
 
 let print_gate_truth_table gate =
   let print_row inputs result =
@@ -53,24 +53,27 @@ let print_gate_truth_table gate =
   | _ ->
       Printf.printf "Circuit truth table printing not supported\n"
 
-let _ =
-  print_string "NOT GATE\n";
+let test_gates () =
+  print_string "not gate\n";
   print_gate_truth_table not_gate;
   print_newline ();
-  print_string "AND GATE\n";
+  print_string "and gate\n";
   print_gate_truth_table and_gate;
   print_newline ();
-  print_string "OR GATE\n";
+  print_string "or gate\n";
   print_gate_truth_table or_gate;
   print_newline ();
-  print_string "NAND GATE\n";
+  print_string "nand gate\n";
   print_gate_truth_table nand_gate;
   print_newline ();
-  print_string "NOR GATE\n";
+  print_string "nor gate\n";
   print_gate_truth_table nor_gate;
   print_newline ();
-  print_string "XOR GATE\n";
+  print_string "xor gate\n";
   print_gate_truth_table xor_gate;
   print_newline ();
-  print_string "XNOR GATE\n";
-  print_gate_truth_table xnor_gate;
+  print_string "xnor gate\n";
+  print_gate_truth_table xnor_gate;;
+
+let () =
+  test_gates ()
