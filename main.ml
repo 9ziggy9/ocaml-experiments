@@ -162,13 +162,41 @@ let split lst f_len =
   in
   (aux_fst 0 [] lst, aux_snd 0 [] lst)
 
+let rec slice_model lst left right =
+  if left = 0 then
+    if right = 0 then
+      []
+    else
+      match lst with
+      | [] -> []
+      | hd::tl -> hd :: slice_model tl (left - 1) (right - 1)
+  else
+    match lst with
+    | [] -> []
+    | _::tl -> slice_model tl (left - 1) (right - 1)
+
 let slice lst left right = 
   let rec aux acc i = function
     | []      -> acc
-    | x :: xs -> if (i < left || i >= right )
+    | x :: xs -> if (i < left || i > right )
                  then aux acc (i + 1) xs
                  else aux (acc @ [x]) (i + 1) xs
   in aux [] 0 lst
 
-let () =
-  print_endline "Hello, world!"
+let split_model lst i =
+  let left = slice lst 0 (i - 1) in
+  let right = slice lst i (List.length lst) in
+  (left, right)
+
+let split_alt lst idx =
+  if idx < 0
+  then let idx = List.length lst + idx
+       in slice lst 0 idx, slice lst (idx + 1) (List.length lst)
+  else slice lst 0 (idx - 1), slice lst idx (List.length lst)
+
+let rotate lst n =
+  let len = List.length lst in
+  let n = if n < 0 then len + n else n in
+  let first = slice lst 0 (n - 1) in
+  let second = slice lst n len in
+  second @ first
