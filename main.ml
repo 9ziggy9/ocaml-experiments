@@ -2,7 +2,7 @@ let rec rev_list1 lst = match lst with
   | []    -> []
   | x::xs -> rev_list1 xs @ [x]
 
-let is_palindrome lst = lst = (rev_list lst)
+let is_palindrome lst = lst = (rev_list1 lst)
 
 type 'a node =
   | One of 'a
@@ -99,6 +99,76 @@ let un_rle list =
     | Many (n, x) :: t -> aux (many acc n x) t
   in
     aux [] (List.rev list)
+
+(* let rec replicate l count = match l with *)
+(*   | x :: xs -> x :: replicate xs (count + 1) *)
+(*   | [x]     -> x :: [] *)
+(*   | _       -> [] *)
+
+let rec dup_1 x n = if n < 1 then []
+                  else if n = 1 then [x]
+                  else [x] @ dup_1 x (n - 1)
+
+let replicate_1 lst count =
+  List.flatten (List.map (fun x -> dup_1 x count) lst)
+
+let dup x n =
+  let rec aux acc count = if count < 1 then acc
+                          else if count = 1 then x :: acc
+                          else x :: (aux acc (count - 1)) in
+  aux [] n
+
+let replicate_solution list n =
+    let rec prepend n acc x =
+      if n = 0 then acc else prepend (n-1) (x :: acc) x in
+    let rec aux acc = function
+      | [] -> acc
+      | h :: t -> aux (prepend n acc h) t in
+    (* This could also be written as:
+       List.fold_left (prepend n) [] (List.rev list) *)
+    aux [] (List.rev list)
+
+let replicate lst n =
+  let rec aux l m acc = match l with
+  | x :: xs -> aux xs m (dup x m @ acc)
+  | []      -> acc
+  in List.rev (aux lst n [])
+
+let drop lst n =
+  let rec aux i = function
+    | []    -> []
+    | x::xs -> if i = n
+               then aux 0 xs
+               else x :: (aux (i + 1) xs)
+  in aux 0 lst
+
+let split_solution list n =
+    let rec aux i acc = function
+      | [] -> List.rev acc, []
+      | h :: t as l -> if i = 0 then List.rev acc, l
+                       else aux (i - 1) (h :: acc) t 
+    in aux n [] list
+
+let split lst f_len =
+  let rec aux_fst i acc1 = function
+    | []      -> []
+    | x :: xs -> if i = f_len then acc1
+                 else aux_fst (i + 1) (acc1 @ [x]) xs
+  in
+  let rec aux_snd j acc2 = function
+    | []      -> acc2
+    | x :: xs -> if j <= f_len then aux_snd (j + 1) acc2 xs
+                 else aux_snd (j + 1) (acc2 @ [x]) xs
+  in
+  (aux_fst 0 [] lst, aux_snd 0 [] lst)
+
+let slice lst left right = 
+  let rec aux acc i = function
+    | []      -> acc
+    | x :: xs -> if (i < left || i >= right )
+                 then aux acc (i + 1) xs
+                 else aux (acc @ [x]) (i + 1) xs
+  in aux [] 0 lst
 
 let () =
   print_endline "Hello, world!"
