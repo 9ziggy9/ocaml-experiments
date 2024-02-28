@@ -200,3 +200,31 @@ let rotate lst n =
   let first = slice lst 0 (n - 1) in
   let second = slice lst n len in
   second @ first
+
+let rec remove_at_solution idx = function
+  | []      -> []
+  | x :: xs -> if idx = 0 then xs else x :: remove_at_solution (idx - 1) xs
+
+let remove_at idx lst =
+  let rec aux acc target = function
+    | []      -> acc
+    | x :: xs ->
+       if target = idx then aux acc (target + 1) xs
+       else aux (acc @ [x]) (target + 1) xs
+  in aux [] 0 lst
+
+let rec insert_at el idx =  function
+  | []             -> [el]
+  | (x :: xs) as l -> if idx = 0 then el :: l
+                      else x :: insert_at el (idx - 1) xs
+
+let rec range from until =
+  let move = fun n -> if from < until then n + 1 else n - 1 in
+  if from = until then [until] else from :: range (move from) until
+
+let range_tail_recursive from until =
+  let rec aux from until acc =
+    let move = if from < until then (fun n -> n + 1) else (fun n -> n - 1) in
+    if from = until then until :: acc
+    else aux (move from) until (from :: acc)
+  in List.rev (aux from until [])
