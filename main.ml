@@ -228,3 +228,134 @@ let range_tail_recursive from until =
     if from = until then until :: acc
     else aux (move from) until (from :: acc)
   in List.rev (aux from until [])
+
+let rand_select_model l n =
+  let rec aux acc n =
+    if n = 0 then acc
+    else
+      let len = List.length l in
+      let i = Random.int len in
+      let x = List.nth l i in
+      if List.mem x acc then aux acc n
+      else aux (x :: acc) (n - 1)
+  in aux [] n
+
+let rand_select list n =
+    let rec extract acc n = function
+      | [] -> raise Not_found
+      | h :: t -> if n = 0 then (h, acc @ t) else extract (h :: acc) (n - 1) t
+    in
+    let extract_rand list len =
+      extract [] (Random.int len) list
+    in
+    let rec aux n acc list len =
+      if n = 0 then acc else
+        let picked, rest = extract_rand list len in
+        aux (n - 1) (picked :: acc) rest (len - 1)
+    in
+    let len = List.length list in
+      aux (min n len) [] list len
+
+type bool_expr =
+    | Ident of string
+    | Not   of bool_expr
+    | And   of bool_expr * bool_expr
+    | Or    of bool_expr * bool_expr
+    | Xor   of bool_expr * bool_expr
+    | Nand  of bool_expr * bool_expr
+    | Nor   of bool_expr * bool_expr
+
+let rec eval2 identA valA identB valB = function
+  | Ident x      -> if x = identA then valA
+                    else if x = identB then valB
+                    else failwith "Panic: invalid var in expr"
+  | Not e        -> not (eval2 identA valA identB valB e)
+  | And (e1, e2) -> eval2 identA valA identB valB e1
+                    && eval2 identA valA identB valB e2
+  | Or  (e1, e2) -> eval2 identA valA identB valB e1
+                    || eval2 identA valA identB valB e2
+  | Xor  (e1, e2) -> eval2 identA valA identB valB e1
+                     <> eval2 identA valA identB valB e2
+  | Nand (e1, e2) -> not (eval2 identA valA identB valB e1
+                          && eval2 identA valA identB valB e2)
+  | Nor  (e1, e2) -> not (eval2 identA valA identB valB e1
+                          || eval2 identA valA identB valB e2)
+
+
+(* A more Haskell-like syntax for type annotation. *)
+let table2 : string -> string -> bool_expr -> (bool * bool * bool) list =
+  fun ident1 ident2 expr -> [
+      (true,  true,  eval2 ident1 true  ident2 true  expr);
+      (true,  false, eval2 ident1 true  ident2 false expr);
+      (false, true,  eval2 ident1 false ident2 true  expr);
+      (false, false, eval2 ident1 false ident2 false expr);
+    ]
+
+let print_table2 table2 =
+  let header = "| A | B | out |" in
+  let bar = String.make (String.length header) '-' in
+  let rec print_rows = function
+    | [] -> ()
+    | ((Ident a, Ident b, c) :: rows) ->
+      let c_str = if c then "1" else "0" in
+      let row = Printf.sprintf "| %s | %s | %s |" a b c_str in
+      print_endline row;
+      print_rows rows
+  in
+  print_endline bar;
+  print_endline header;
+  print_endline bar;
+  print_rows table2;
+  print_endline bar
+
+
+let test_gate expected name expr =
+  let actual = table2 "a" "b" expr in
+  if expected = actual then
+    Printf.printf "Testing %s gate: PASSED\n" name
+  else
+    Printf.printf "Testing %s gate: FAILED\n" name
+
+let run_tests () =
+  test_gate [
+    (true, true, true);
+    (true, false, false);
+    (false, true, false);
+    (false, false, false);
+  ] "And" (And (Ident "a", Ident "b"));
+
+  test_gate [
+    (true, true, true);
+    (true, false, true);
+    (false, true, true);
+    (false, false, false);
+  ] "Or" (Or (Ident "a", Ident "b"));
+
+  test_gate [
+    (true, true, false);
+    (true, false, true);
+    (false, true, true);
+    (false, false, false);
+  ] "Xor" (Xor (Ident "a", Ident "b"));
+
+  test_gate [
+    (true, true, false);
+    (true, false, true);
+    (false, true, true);
+    (false, false, true);
+  ] "Nand" (Nand (Ident "a", Ident "b"));
+
+  test_gate [
+    (true, true, false);
+    (true, false, false);
+    (false, true, false);
+    (false, false, true);
+  ] "Nor" (Nor (Ident "a", Ident "b"));;
+
+type truth_table2 = (bool * bool * bool) list
+
+let apply_truth_table2 table2 =
+  fun a b ->
+    match List.assoc (a, b) table2 with
+    | Some c -> c
+    | None -> failwith "Panic: invalid input in apply_truth_table2"
